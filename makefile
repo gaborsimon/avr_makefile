@@ -28,10 +28,10 @@ CSTANDARD = gnu99
 #***************************************************************************************************
 
 #Source file directory
-DIR_SRC = sources
+DIR_SRC = src
 
 # Generated output directory
-DIR_BIN = bin
+DIR_BIN = upload
 DIR_GEN = generated
 DIR_OBJ = objects
 
@@ -42,7 +42,7 @@ BIN = $(DIR_BIN)/$(PROJECT)
 GEN = $(DIR_GEN)/$(PROJECT)
 
 # Object files
-OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(wildcard *.c))
+OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(wildcard $(DIR_SRC)/*.c)))
 
 # Compiler flags definitions
 CFLAGS  = -mmcu=$(MCU)
@@ -57,7 +57,7 @@ SIZE    = avr-size
 RM      = -rm -d -R -f
 
 # Message definition during working
-TXT_LINE_LONG       = "================================================================================"
+TXT_LINE_LONG       = "========================================="
 TXT_LINE_SHORT      = "------------------------------"
 TXT_BUILD_START     = "BUILD STARTED"
 TXT_BUILD_END       = "BUILD FINISHED SUCCESSFULL"
@@ -119,12 +119,13 @@ $(BIN).hex: $(GEN).elf | $(DIR_BIN)
 	@$(OBJCOPY) -j .text -j .data -O $(FORMAT) $< $@
 	@echo
 	@echo
+	@echo
 	@$(SIZE) -C --mcu=$(MCU) $(GEN).elf	
 
 # Convert: create EEPROM output files (.eep) from ELF output file
 $(BIN).eep: $(GEN).elf | $(DIR_BIN)
 	@echo
-	@echo $(TXT_CREATE_EEP)
+	@echo -n $(TXT_CREATE_EEP) 
 	@$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O $(FORMAT) $< $@
 
 # Link: create GNU executable binary file from object files
@@ -138,7 +139,7 @@ $(GEN).elf: $(OBJ) | $(DIR_GEN)
 	@$(CC) -g $(CFLAGS) -Wl,-Map,$(GEN).map -o $@ $^
 	
 # Compile: create object files from C source files
-$(DIR_OBJ)/%.o: %.c | $(DIR_OBJ)
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
 	@echo
 	@echo $(TXT_LINE_SHORT)
 	@echo $(TXT_COMPILE) $<
