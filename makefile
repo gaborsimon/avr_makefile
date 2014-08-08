@@ -2,7 +2,7 @@
 #
 # This makefile is created by SimonG (Gabor Simon)
 #
-# v20140730_1550
+# v20140731_1423
 #
 ####################################################################################################
 
@@ -16,9 +16,39 @@ PROJECT = main
 # Controller type
 MCU = atmega2560
 
-# Optimization switches
-OPT  = -Os
-OPT += -g -Wall
+# Optimization level
+OPT_LEVEL  = -Os
+
+# Generate debugging information that can be used by avr-gdb.
+CFLAGS  = -g
+
+# All warnings are switched on
+CFLAGS += -Wall
+
+# Make any unqualfied char type an unsigned char. Without this option, they default to a signed char.
+CFLAGS += -funsigned-char
+
+# Make any unqualified bitfield type unsigned. By default, they are signed.
+CFLAGS += -funsigned-bitfields
+
+# Allocate to an enum type only as many bytes as it needs for the declared range of possible values.
+# Specifically, the enum type will be equivalent to the smallest integer type which has enough room.
+CFLAGS += -fshort-enums
+
+# Pack all structure members together without holes.
+CFLAGS += -fpack-struct
+
+# Do not include unused function and data
+# Generally used with --gc-sections.
+# This causes each function to be placed into a separate internal memory section,
+# which --gc-sections can then discard if the section (function) is unreferenced.
+CFLAGS += -ffunction-sections
+CFLAGS += -fdata-sections
+
+# In case of C++, exceptions are not supported.
+# Since exceptions are enabled by default in the C++ frontend, they explicitly need to be turned off
+# using -fno-exceptions in the compiler options. 
+CFLAGS += -fno-exceptions
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
@@ -36,7 +66,7 @@ CSTANDARD = gnu99
 #***************************************************************************************************
 
 #Source file directory
-DIR_SRC = src
+DIR_SRC = sources
 
 # Generated output directories
 DIR_UPL = upload
@@ -54,9 +84,10 @@ MAP = $(DIR_GEN)/$(PROJECT).map
 OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(wildcard $(DIR_SRC)/*.c)))
 
 # Compiler flags
-CFLAGS  = -mmcu=$(MCU)
-CFLAGS += $(OPT)
-CFLAGS += -std=$(CSTANDARD)
+CFLAGS_ALL  = -mmcu=$(MCU)
+CFLAGS_ALL += $(OPT_LEVEL)
+CFLAGS_ALL += $(CFLAGS)
+CFLAGS_ALL += -std=$(CSTANDARD)
 
 # Linker flags
 LDFLAGS =
@@ -132,7 +163,7 @@ $(HEX): $(ELF) | $(DIR_UPL)
 	@echo
 	@echo
 	@echo
-	@$(SIZE) -C --mcu=$(MCU) $<
+	@$(SIZE) --format=avr --mcu=$(MCU) $<
 
 # Create EEPROM output file (.eep) from binary (.elf) output file
 $(EEP): $(ELF) | $(DIR_UPL)
@@ -140,7 +171,7 @@ $(EEP): $(ELF) | $(DIR_UPL)
 	@echo -n $(TXT_CREATE_EEP) 
 	@$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O $(FORMAT) $< $@
 
-# Create list output file (.lst) from binary (.elf) output file
+# Create extended list file (.lst) from binary (.elf) output file
 $(LST): $(ELF) | $(DIR_GEN)
 	@echo $(TXT_CREATE_LST) 
 	@$(OBJDUMP) -h -S $< > $@ 
@@ -148,20 +179,20 @@ $(LST): $(ELF) | $(DIR_GEN)
 # Create mapping output file (.map) from binary (.elf) and object (.o) output files
 $(MAP): $(ELF) $(OBJ) | $(DIR_GEN)
 	@echo $(TXT_CREATE_MAP) 
-	@$(CC) -g $(CFLAGS) -Wl,-Map,$@ -o $^
+	@$(CC) $(OPT_LEVEL) -mmcu=$(MCU) -Wl,-Map,$@ -o $^
 
 # Link: create GNU executable binary file (.elf) from object files (.o)
 $(ELF): $(OBJ) | $(DIR_GEN)
 	@echo
 	@echo $(TXT_CREATE_ELF)
-	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ 
+	@$(CC) $(OPT_LEVEL),--gc-sections -mmcu=$(MCU) -o $@ $^ 
 	
 # Compile: create object files from C source files
 $(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
 	@echo
 	@echo $(TXT_LINE_SHORT)
 	@echo $(TXT_COMPILE) $<
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS_ALL) -c $< -o $@
 	@echo $(TXT_LINE_SHORT)
 
 # Directory creation for object files
