@@ -2,7 +2,7 @@
 #
 # This makefile is created by SimonG (Gabor Simon)
 #
-# v20140731_1423
+# v20140805_2219
 #
 ####################################################################################################
 
@@ -60,6 +60,11 @@ FORMAT = ihex
 #   gnu99 - c99 plus GCC extensions
 CSTANDARD = gnu99
 
+# Programmer configuration
+PROG_TYPE = wiring
+PROG_PORT = COM1
+PROG_BAUD = 115200
+
 
 #***************************************************************************************************
 #****** DEFINITIONS
@@ -80,6 +85,12 @@ ELF = $(DIR_GEN)/$(PROJECT).elf
 LST = $(DIR_GEN)/$(PROJECT).lst
 MAP = $(DIR_GEN)/$(PROJECT).map
 
+# Read files from target
+LFUSE = $(DIR_UPL)/lfuse.hex
+HFUSE = $(DIR_UPL)/hfuse.hex
+EFUSE = $(DIR_UPL)/efuse.hex
+EEPROM = $(DIR_UPL)/eeprom.hex
+
 # Generated object files
 OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(wildcard $(DIR_SRC)/*.c)))
 
@@ -97,6 +108,7 @@ CC      = avr-gcc
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE    = avr-size
+PROG    = avrdude
 RM      = -rm -d -R -f
 
 # Messages during processing
@@ -106,6 +118,8 @@ TXT_BUILD_START     = "BUILD STARTED"
 TXT_BUILD_END       = "BUILD FINISHED SUCCESSFULL"
 TXT_CLEAN_START     = "CLEAN STARTED"
 TXT_CLEAN_END       = "CLEAN FINISHED"
+TXT_PROGRAM_START   = "PROGRAMMING STARTED"
+TXT_PROGRAM_END     = "PROGRAMMING FINISHED"
 TXT_COMPILE         = "Compiling: "
 TXT_GCC_VERSION     = "AVR-GCC version: "
 TXT_RM_BIN          = "Removing binary files..."
@@ -121,11 +135,11 @@ TXT_CREATE_MAP      = "Creating map file..."
 #***************************************************************************************************
 #****** TARGETS
 #***************************************************************************************************
-.PHONY: all clean rebuild
+.PHONY: all clean build program readfuse readeeprom
 
-rebuild: clean all
+all: clean build
 
-all: $(LST) $(MAP) $(EEP) $(HEX)
+build: $(LST) $(MAP) $(EEP) $(HEX)
 	@echo
 	@echo $(TXT_LINE_LONG)
 	@echo $(TXT_BUILD_END)
@@ -147,6 +161,48 @@ clean:
 	@echo
 	@echo $(TXT_LINE_LONG)
 	@echo $(TXT_CLEAN_END)
+	@echo $(TXT_LINE_LONG)
+	@echo
+
+program:
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_START)
+	@echo $(TXT_LINE_LONG)
+	@echo
+	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) -D -U flash:w:$(HEX):i
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_END)
+	@echo $(TXT_LINE_LONG)
+	@echo
+
+readfuse:
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_START)
+	@echo $(TXT_LINE_LONG)
+	@echo
+	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) -D \
+    -U lfuse:r:$(LFUSE):h \
+    -U hfuse:r:$(HFUSE):h \
+    -U efuse:r:$(EFUSE):h
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_END)
+	@echo $(TXT_LINE_LONG)
+	@echo
+
+readeeprom:
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_START)
+	@echo $(TXT_LINE_LONG)
+	@echo
+	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) -D -U eeprom:r:$(EEPROM):i
+	@echo
+	@echo $(TXT_LINE_LONG)
+	@echo $(TXT_PROGRAM_END)
 	@echo $(TXT_LINE_LONG)
 	@echo
 
