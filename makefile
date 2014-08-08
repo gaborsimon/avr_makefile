@@ -1,3 +1,11 @@
+####################################################################################################
+#
+# This makefile is created by SimonG (Gabor Simon)
+#
+# v20140730_1550
+#
+####################################################################################################
+
 #***************************************************************************************************
 #****** CONFIGURATION
 #***************************************************************************************************
@@ -6,7 +14,7 @@
 PROJECT = main
 
 # Controller type
-MCU = atmega8
+MCU = atmega2560
 
 # Optimization switches
 OPT  = -Os
@@ -30,33 +38,37 @@ CSTANDARD = gnu99
 #Source file directory
 DIR_SRC = src
 
-# Generated output directory
-DIR_BIN = upload
+# Generated output directories
+DIR_UPL = upload
 DIR_GEN = generated
 DIR_OBJ = objects
 
-# Binary files
-BIN = $(DIR_BIN)/$(PROJECT)
+# Generated output files
+HEX = $(DIR_UPL)/$(PROJECT).hex
+EEP = $(DIR_UPL)/$(PROJECT).eep
+ELF = $(DIR_GEN)/$(PROJECT).elf
+LST = $(DIR_GEN)/$(PROJECT).lst
+MAP = $(DIR_GEN)/$(PROJECT).map
 
-# Generated files
-GEN = $(DIR_GEN)/$(PROJECT)
-
-# Object files
+# Generated object files
 OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(wildcard $(DIR_SRC)/*.c)))
 
-# Compiler flags definitions
+# Compiler flags
 CFLAGS  = -mmcu=$(MCU)
 CFLAGS += $(OPT)
 CFLAGS += -std=$(CSTANDARD)
 
-# Program and command definitions
+# Linker flags
+LDFLAGS =
+
+# Program and command
 CC      = avr-gcc
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE    = avr-size
 RM      = -rm -d -R -f
 
-# Message definition during working
+# Messages during processing
 TXT_LINE_LONG       = "========================================="
 TXT_LINE_SHORT      = "------------------------------"
 TXT_BUILD_START     = "BUILD STARTED"
@@ -82,7 +94,7 @@ TXT_CREATE_MAP      = "Creating map file..."
 
 rebuild: clean all
 
-all: $(BIN).eep $(BIN).hex
+all: $(LST) $(MAP) $(EEP) $(HEX)
 	@echo
 	@echo $(TXT_LINE_LONG)
 	@echo $(TXT_BUILD_END)
@@ -96,7 +108,7 @@ clean:
 	@echo $(TXT_LINE_LONG)
 	@echo
 	@echo $(TXT_RM_BIN)
-	@$(RM) $(DIR_BIN)
+	@$(RM) $(DIR_UPL)
 	@echo $(TXT_RM_GEN)
 	@$(RM) $(DIR_GEN)
 	@echo $(TXT_RM_OBJ)
@@ -112,31 +124,37 @@ clean:
 #****** RULES
 #***************************************************************************************************
 
-# Convert: create flash binary output file (.hex) from ELF output file
-$(BIN).hex: $(GEN).elf | $(DIR_BIN)
+# Create flash output file (.hex) from binary (.elf) output file
+$(HEX): $(ELF) | $(DIR_UPL)
 	@echo
 	@echo $(TXT_CREATE_HEX)
 	@$(OBJCOPY) -j .text -j .data -O $(FORMAT) $< $@
 	@echo
 	@echo
 	@echo
-	@$(SIZE) -C --mcu=$(MCU) $(GEN).elf	
+	@$(SIZE) -C --mcu=$(MCU) $<
 
-# Convert: create EEPROM output files (.eep) from ELF output file
-$(BIN).eep: $(GEN).elf | $(DIR_BIN)
+# Create EEPROM output file (.eep) from binary (.elf) output file
+$(EEP): $(ELF) | $(DIR_UPL)
 	@echo
 	@echo -n $(TXT_CREATE_EEP) 
 	@$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O $(FORMAT) $< $@
 
-# Link: create GNU executable binary file from object files
-$(GEN).elf: $(OBJ) | $(DIR_GEN)
+# Create list output file (.lst) from binary (.elf) output file
+$(LST): $(ELF) | $(DIR_GEN)
+	@echo $(TXT_CREATE_LST) 
+	@$(OBJDUMP) -h -S $< > $@ 
+
+# Create mapping output file (.map) from binary (.elf) and object (.o) output files
+$(MAP): $(ELF) $(OBJ) | $(DIR_GEN)
+	@echo $(TXT_CREATE_MAP) 
+	@$(CC) -g $(CFLAGS) -Wl,-Map,$@ -o $^
+
+# Link: create GNU executable binary file (.elf) from object files (.o)
+$(ELF): $(OBJ) | $(DIR_GEN)
 	@echo
 	@echo $(TXT_CREATE_ELF)
 	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ 
-	@echo $(TXT_CREATE_LST) 
-	@$(OBJDUMP) -h -S $@ > $(GEN).lst 
-	@echo $(TXT_CREATE_MAP) 
-	@$(CC) -g $(CFLAGS) -Wl,-Map,$(GEN).map -o $@ $^
 	
 # Compile: create object files from C source files
 $(DIR_OBJ)/%.o: $(DIR_SRC)/%.c | $(DIR_OBJ)
@@ -161,5 +179,5 @@ $(DIR_GEN):
 	@mkdir -p $(DIR_GEN)
 
 # Directory creation for binary FLASH file	
-$(DIR_BIN):
-	@mkdir -p $(DIR_BIN)
+$(DIR_UPL):
+	@mkdir -p $(DIR_UPL)
