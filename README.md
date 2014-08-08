@@ -28,12 +28,12 @@ DIRECTORY STRUCTURE
 The makefile needs the following directory structure:
 
 [MyProjectName]
- |-> [sources]
-     |-> main.c
-     |-> main.h
-     |-> othersource.c
-     |-> othersource.h
- |-> makefile
+  - [sources]
+    - main.c
+    - main.h
+    - othersource.c
+    - othersource.h
+  - makefile
 
 The [sources] directory shall contain all of the .c and .h files.
 Currently the subdirectories are not supported.
@@ -61,20 +61,14 @@ COMMANDS
 
 The makefile provides commands for the following:
 
-(A) BUILD
-Creates the necessary directories with object, binary, list, mapping, eeprom and hex files
+(A) BUILD: Creates the necessary directories with object, binary, list, mapping, eeprom and hex files
 
-(B) CLEAN
-Removes all of the generated directories ([generated], [objects], [upload]).
+(B) CLEAN: Removes all of the generated directories ([generated], [objects], [upload]).
 
-(C) ALL
-Performs the CLEAN after the BUILD commands.
+(C) ALL: Performs the CLEAN after the BUILD commands.
 
-(D) PROGRAM
-Uploads the .hex file into the AVR ship.
+(D) PROGRAM: Uploads the .hex file into the AVR ship.
 
-(E) READFUSE
-Reads back the fuse bits from the AVR chip into individual .hex files (high fuse, low fuse, extended fuse) of [UPLOAD] directory.
+(E) READFUSE: Reads back the fuse bits from the AVR chip into individual .hex files (high fuse, low fuse, extended fuse) of [UPLOAD] directory.
 
-(E) READEEPROM
-Reads back the EEPROM content from the AVR chip into a .hex files of [UPLOAD] directory.
+(E) READEEPROM: Reads back the EEPROM content from the AVR chip into a .hex files of [UPLOAD] directory.
