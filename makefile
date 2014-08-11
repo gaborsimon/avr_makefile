@@ -1,14 +1,14 @@
-####################################################################################################
+################################################################################
 #
 # This makefile is created by SimonG (Gabor Simon)
 #
-# v20140805_2219
+# v20140811_2200
 #
-####################################################################################################
+################################################################################
 
-#***************************************************************************************************
+#*******************************************************************************
 #****** CONFIGURATION
-#***************************************************************************************************
+#*******************************************************************************
 
 # Project name
 PROJECT = main
@@ -25,29 +25,34 @@ CFLAGS  = -g
 # All warnings are switched on
 CFLAGS += -Wall
 
-# Make any unqualfied char type an unsigned char. Without this option, they default to a signed char.
+# Make any unqualfied char type an unsigned char.
+# Without this option they default to a signed char.
 CFLAGS += -funsigned-char
 
-# Make any unqualified bitfield type unsigned. By default, they are signed.
+# Make any unqualified bitfield type unsigned.
+# By default they are signed.
 CFLAGS += -funsigned-bitfields
 
-# Allocate to an enum type only as many bytes as it needs for the declared range of possible values.
-# Specifically, the enum type will be equivalent to the smallest integer type which has enough room.
+# Allocate to an enum type only as many bytes as it needs for the declared
+# range of possible values.
+# Specifically, the enum type will be equivalent to the smallest integer type
+# which has enough room.
 CFLAGS += -fshort-enums
 
 # Pack all structure members together without holes.
 CFLAGS += -fpack-struct
 
 # Do not include unused function and data
-# Generally used with --gc-sections.
-# This causes each function to be placed into a separate internal memory section,
-# which --gc-sections can then discard if the section (function) is unreferenced.
+# Generally used with "--gc-sections" linker option.
+# This causes each function to be placed into a separate internal
+# memory section, which "--gc-sections" can then discard
+# if the section (function) is unreferenced.
 CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
 
 # In case of C++, exceptions are not supported.
-# Since exceptions are enabled by default in the C++ frontend, they explicitly need to be turned off
-# using -fno-exceptions in the compiler options. 
+# Since exceptions are enabled by default in the C++ front-end, they explicitly
+# need to be turned off # using "-fno-exceptions" in the compiler options. 
 CFLAGS += -fno-exceptions
 
 # Output format. (can be srec, ihex, binary)
@@ -66,9 +71,9 @@ PROG_PORT = COM1
 PROG_BAUD = 115200
 
 
-#***************************************************************************************************
+#*******************************************************************************
 #****** DEFINITIONS
-#***************************************************************************************************
+#*******************************************************************************
 
 #Source file directory
 DIR_SRC = sources
@@ -132,9 +137,9 @@ TXT_CREATE_LST      = "Creating lst file..."
 TXT_CREATE_MAP      = "Creating map file..."
 
 
-#***************************************************************************************************
+#*******************************************************************************
 #****** TARGETS
-#***************************************************************************************************
+#*******************************************************************************
 .PHONY: all clean build program readfuse readeeprom
 
 all: clean build
@@ -170,7 +175,8 @@ program:
 	@echo $(TXT_PROGRAM_START)
 	@echo $(TXT_LINE_LONG)
 	@echo
-	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) -D -U flash:w:$(HEX):i
+	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) \
+    -D -U flash:w:$(HEX):i
 	@echo
 	@echo $(TXT_LINE_LONG)
 	@echo $(TXT_PROGRAM_END)
@@ -199,7 +205,8 @@ readeeprom:
 	@echo $(TXT_PROGRAM_START)
 	@echo $(TXT_LINE_LONG)
 	@echo
-	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) -D -U eeprom:r:$(EEPROM):i
+	@$(PROG) -p $(MCU) -c $(PROG_TYPE) -P $(PROG_PORT) -b $(PROG_BAUD) \
+    -D -U eeprom:r:$(EEPROM):i
 	@echo
 	@echo $(TXT_LINE_LONG)
 	@echo $(TXT_PROGRAM_END)
@@ -207,9 +214,9 @@ readeeprom:
 	@echo
 
 
-#***************************************************************************************************
+#*******************************************************************************
 #****** RULES
-#***************************************************************************************************
+#*******************************************************************************
 
 # Create flash output file (.hex) from binary (.elf) output file
 $(HEX): $(ELF) | $(DIR_UPL)
@@ -232,7 +239,8 @@ $(LST): $(ELF) | $(DIR_GEN)
 	@echo $(TXT_CREATE_LST) 
 	@$(OBJDUMP) -h -S $< > $@ 
 
-# Create mapping output file (.map) from binary (.elf) and object (.o) output files
+# Create mapping output file (.map) from binary (.elf) and
+# object (.o) output files
 $(MAP): $(ELF) $(OBJ) | $(DIR_GEN)
 	@echo $(TXT_CREATE_MAP) 
 	@$(CC) $(OPT_LEVEL) -mmcu=$(MCU) -Wl,-Map,$@ -o $^
